@@ -36,31 +36,4 @@ formato `.diagramado`. Veja [README-DesignCraft.md](README-DesignCraft.md), `NOT
   autortotal.com.br (login com e-mail e senha, com verificação em duas etapas quando a conta tem).
   O Mentor recebe o texto do livro aberto para responder sobre ele.
 
-## Gerar os instaladores
 
-**Pelo GitHub (recomendado):** suba esta pasta para um repositório no GitHub. O workflow
-`.github/workflows/diagrama.yml` gera sozinho, a cada envio:
-
-- `DiagramaAutorTotal-Setup.exe` (instalador do Windows, que associa os arquivos `.diagramado`) e
-  `DiagramaAutorTotal-Windows-portatil.zip`;
-- `DiagramaAutorTotal-Mac.dmg` (Apple Silicon e Intel; sem assinatura da Apple);
-- `DiagramaAutorTotal-Linux.tar.gz`.
-
-Eles ficam em *Actions → a última execução → Artifacts*. Criando uma tag `v1.0.0`, vão também para uma
-*Release*.
-
-**No seu Windows:** dois cliques em `packaging\diagrama\CONSTRUIR-NO-WINDOWS.bat`. Na primeira vez ele
-instala o Rust e as ferramentas de compilação da Microsoft (demora); depois compila e põe o programa
-na pasta `dist`.
-
-**Linha de comando:** `cargo build --release -p designcraft --bin diagrama`.
-
-## Para quem mexe no código
-
-- O livro (dados, partes, capítulos, formato): `crates/doc/src/livro.rs`. Vai dentro do `.diagramado`.
-- A diagramação automática: `crates/engine/src/livro.rs`. Comandos: `crates/engine/src/cmd/livro.rs`
-  (`livro.novo`, `livro.obter`, `livro.definir`, `livro.diagramar`, `livro.importar_texto`).
-- Painéis: `crates/ui-egui/src/panels/livro.rs` e `crates/ui-egui/src/panels/mentor.rs`.
-- Sem janela: `designcraft-cli run --cmd 'livro.novo={"livro": {...}}' --export livro.pdf`.
-- Testes: `cargo test -p designcraft-engine --lib livro`, `cargo test -p designcraft-doc --lib livro`,
-  `cargo test -p designcraft-ui-egui --lib mentor`.
