@@ -1,0 +1,107 @@
+# Diagrama do Autor Total: gera o instalador do Windows, o app do macOS e o do Linux.
+# Roda a cada push na main, em tags v* e manualmente (Actions → Construir o Diagrama → Run workflow).
+# Os arquivos ficam em Actions → (a execução) → Artifacts. Numa tag v*, também numa Release.
+name: Construir o Diagrama
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Compilar
+        env:
+          DESIGNCRAFT_REQUIRE_WINRES: "1"
+        run: cargo build --release -p designcraft --bin diagrama
+      - name: Instalador (Inno Setup)
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress; }
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DVersao=$((Get-Content Cargo.toml | Select-String '^version = "(.+)"').Matches[0].Groups[1].Value) packaging\diagrama\diagrama.iss
+          New-Item -ItemType Directory -Force dist-portatil | Out-Null
+          Copy-Item target\release\diagrama.exe "dist-portatil\Diagrama do Autor Total.exe"
+          Compress-Archive -Path dist-portatil\* -DestinationPath dist\DiagramaAutorTotal-Windows-portatil.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Diagrama-Windows
+          path: dist/*
+      - name: Release (tags)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+      - name: Compilar (Apple Silicon e Intel)
+        run: |
+          cargo build --release -p designcraft --bin diagrama
+          cargo build --release -p designcraft --bin diagrama --target x86_64-apple-darwin
+          lipo -create -output diagrama target/release/diagrama target/x86_64-apple-darwin/release/diagrama
+      - name: Montar o .app e o .dmg
+        run: |
+          APP="Diagrama do Autor Total.app"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          cp diagrama "$APP/Contents/MacOS/diagrama"
+          cp assets/app-icon/designcraft.icns "$APP/Contents/Resources/diagrama.icns"
+          VERSAO=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          sed "s/@VERSAO@/$VERSAO/g" packaging/diagrama/Info.plist > "$APP/Contents/Info.plist"
+          codesign --force --deep -s - "$APP"
+          mkdir -p dist dmg && cp -R "$APP" dmg/ && ln -s /Applications dmg/Aplicativos
+          hdiutil create -volname "Diagrama do Autor Total" -srcfolder dmg -ov -format UDZO dist/DiagramaAutorTotal-Mac.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Diagrama-Mac
+          path: dist/*
+      - name: Release (tags)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Bibliotecas do sistema
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libxkbcommon-dev libwayland-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+      - name: Compilar
+        run: cargo build --release -p designcraft --bin diagrama
+      - name: Pacote
+        run: |
+          mkdir -p dist pacote/diagrama-autor-total
+          cp target/release/diagrama pacote/diagrama-autor-total/
+          cp assets/app-icon/hicolor/256x256/apps/ai.storyteller.designcraft.png pacote/diagrama-autor-total/diagrama.png
+          cp packaging/diagrama/diagrama.desktop pacote/diagrama-autor-total/
+          tar -C pacote -czf dist/DiagramaAutorTotal-Linux.tar.gz diagrama-autor-total
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Diagrama-Linux
+          path: dist/*
+      - name: Release (tags)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*

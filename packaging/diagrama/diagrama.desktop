@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Diagrama do Autor Total
+Comment=Diagramação de livros com o Mentor do Autor Total
+Exec=diagrama %F
+Icon=diagrama
+Terminal=false
+Categories=Office;Publishing;Graphics;
+MimeType=application/x-diagramado;
