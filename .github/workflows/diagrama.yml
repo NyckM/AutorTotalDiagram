@@ -105,3 +105,28 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
+
+  # Os instaladores também vão para o ramo "instaladores", com links diretos (sem login):
+  # https://raw.githubusercontent.com/<dono>/<repositório>/instaladores/<arquivo>
+  publicar:
+    needs: [windows, macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: arquivos
+          merge-multiple: true
+      - name: Enviar para o ramo instaladores
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir site && cd site
+          cp ../arquivos/DiagramaAutorTotal-Setup.exe ../arquivos/DiagramaAutorTotal-Mac.dmg ../arquivos/DiagramaAutorTotal-Linux.tar.gz ../arquivos/DiagramaAutorTotal-Windows-portatil.zip .
+          ls -la > LISTA.txt
+          echo "Versão gerada do commit ${GITHUB_SHA}" > VERSAO.txt
+          git init -q -b instaladores
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Instaladores do commit ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" instaladores
