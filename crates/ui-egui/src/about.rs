@@ -192,7 +192,7 @@ pub fn show(app: &mut DesignApp, ctx: &egui::Context) {
                 .size(11.0)
                 .color(t.text_dim),
             );
-            if link(ui, "Código-fonte original (DesignCraft)", links::GITHUB, t.accent) {
+            if link(ui, "Código do Diagrama no GitHub", links::GITHUB, t.accent) {
                 open = Some("github");
             }
             ui.add_space(12.0);

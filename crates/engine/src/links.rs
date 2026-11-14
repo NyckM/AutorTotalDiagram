@@ -11,7 +11,7 @@ pub const WEBSITE: &str = "https://autortotal.com.br";
 /// DesignCraft's page on the ArtCraft website.
 pub const APP_PAGE: &str = "https://autortotal.com.br/instalar";
 /// DesignCraft's source repository.
-pub const GITHUB: &str = "https://github.com/storytold/designcraft";
+pub const GITHUB: &str = "https://github.com/NyckM/AutorTotalDiagram";
 /// Where to report bugs and request features.
 pub const ISSUES: &str = "mailto:feedback@autortotal.com.br";
 

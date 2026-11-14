@@ -646,14 +646,11 @@ pub const MENUS: &[(&str, &[&str])] = &[
     (
         "Help",
         &[
-            "ui:help.discord",
+            "ui:window.panel|Conversar com o Mentor|{\"panel\": \"mentor\"}",
             "-",
-            "ui:help.appPage",
+            "ui:help.website",
             "ui:help.github",
             "ui:help.issues",
-            "ui:help.website",
-            "-",
-            "cmd:file.newSample",
             "-",
             "ui:help.checkForUpdates",
             "ui:help.about",

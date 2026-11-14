@@ -17,6 +17,10 @@ pub struct Estado {
     sujo: bool,
     capitulo: Option<usize>,
     pub aviso: String,
+    /// Não refazer as páginas a cada mudança (para quem ajusta páginas à mão).
+    manual: bool,
+    /// Mudanças guardadas que ainda não estão nas páginas (no modo manual).
+    pendente: bool,
 }
 
 const FONTES: &[&str] = &["Palatino Linotype", "EB Garamond", "Libre Baskerville", "Source Serif 4", "Book Antiqua", "Georgia", "Times New Roman", "Garamond"];
@@ -73,6 +77,12 @@ fn guardar(app: &mut DesignApp) {
             if let Some(st) = app.session.active() {
                 app.ui.livro.rev = st.revision;
             }
+            // As páginas acompanham o painel: ligar a dedicatória já faz ela aparecer.
+            if app.ui.livro.manual {
+                app.ui.livro.pendente = true;
+            } else {
+                diagramar(app);
+            }
         }
         Err(e) => app.ui.livro.aviso = e,
     }
@@ -83,6 +93,7 @@ pub fn diagramar(app: &mut DesignApp) {
     match app.run("livro.diagramar", json!({"livro": l})) {
         Ok(v) => {
             app.ui.livro.sujo = false;
+            app.ui.livro.pendente = false;
             app.ui.livro.aviso = format!("Livro diagramado: {} páginas.", v["paginas"].as_u64().unwrap_or(0));
             if let Some(st) = app.session.active() {
                 app.ui.livro.rev = st.revision;
@@ -99,6 +110,14 @@ pub fn importar(app: &mut DesignApp) {
         app.ui.livro.doc = None;
         let n = v["capitulos"].as_u64().unwrap_or(0);
         app.ui.livro.aviso = format!("{n} capítulo(s) importado(s). Clique em Diagramar o livro.");
+        if !app.ui.livro.manual {
+            let l = app.session.active().and_then(|st| st.doc.livro.as_deref().cloned());
+            if let Some(l) = l {
+                app.ui.livro.livro = l;
+                diagramar(app);
+                app.ui.livro.aviso = format!("{n} capítulo(s) importado(s) e diagramado(s).");
+            }
+        }
         Ok(v)
     });
     if let Err(e) = r {
@@ -124,11 +143,17 @@ pub fn show(app: &mut DesignApp, ui: &mut egui::Ui) {
     if ui.add(botao).on_hover_text("Monta todas as páginas a partir das partes e dos capítulos (Ctrl+Shift+D)").clicked() {
         diagramar(app);
     }
-    ui.label(
-        egui::RichText::new("Diagramar de novo refaz todas as páginas a partir daqui: ajustes feitos à mão nas páginas se perdem.")
-            .size(10.5)
-            .color(t.text_dim),
-    );
+    let mut auto = !app.ui.livro.manual;
+    if ui
+        .checkbox(&mut auto, "Atualizar as páginas a cada mudança")
+        .on_hover_text("Desligue antes de ajustar páginas à mão: diagramar de novo refaz todas as páginas e os ajustes manuais se perdem.")
+        .changed()
+    {
+        app.ui.livro.manual = !auto;
+    }
+    if app.ui.livro.pendente {
+        ui.label(egui::RichText::new("Há mudanças que ainda não estão nas páginas: clique em Diagramar o livro.").size(11.5).color(t.accent_strong));
+    }
     if !app.ui.livro.aviso.is_empty() {
         ui.label(egui::RichText::new(app.ui.livro.aviso.clone()).size(11.5).color(t.text_dim));
     }
