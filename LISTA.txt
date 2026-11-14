@@ -1,0 +1,8 @@
+total 196404
+drwxr-xr-x 2 runner runner     4096 Nov 14 14:38 .
+drwxr-xr-x 4 runner runner     4096 Nov 14 14:38 ..
+-rw-r--r-- 1 runner runner 44969547 Nov 14 14:38 DiagramaAutorTotal-Linux.tar.gz
+-rw-r--r-- 1 runner runner 88053003 Nov 14 14:38 DiagramaAutorTotal-Mac.dmg
+-rw-r--r-- 1 runner runner 27045121 Nov 14 14:38 DiagramaAutorTotal-Setup.exe
+-rw-r--r-- 1 runner runner 41037301 Nov 14 14:38 DiagramaAutorTotal-Windows-portatil.zip
+-rw-r--r-- 1 runner runner        0 Nov 14 14:38 LISTA.txt
